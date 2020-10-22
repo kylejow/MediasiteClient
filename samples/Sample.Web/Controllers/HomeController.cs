@@ -32,9 +32,10 @@ namespace Sample.Web.Controllers
             return View(folder);
         }
 
-        public IActionResult Privacy()
+        public IActionResult Templates()
         {
-            return View();
+            var templates = _mediasite.GetTemplates().OrderBy(t => t.Name);
+            return View(templates);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -1,0 +1,11 @@
+﻿@model IEnumerable<MediasiteUtil.Models.Template>
+@{
+    ViewData["Title"] = "Mediasite Templates";
+}
+
+<h1 class="display-4">Mediasite Templates</h1>
+
+@foreach(var template in @Model)
+{
+    <p><b>@template.Name</b> - @template.Id</p>
+}
