@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <PackageId>MediasiteUtil.Law.Ucdavis.Edu</PackageId>
     <Authors>UC Davis School of Law</Authors>
     <Description>Mediasite API Client for reading and writing to some of the available Mediasite API endpoints.</Description>
@@ -9,10 +9,11 @@
     <RepositoryUrl>gitproj/MediasiteUtil</RepositoryUrl>
     <PackageTags>Mediasite API REST Client</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RestSharp" Version="106.11.4" />
+    <PackageReference Include="RestSharp" Version="108.0.3" />
   </ItemGroup>
 
 </Project>

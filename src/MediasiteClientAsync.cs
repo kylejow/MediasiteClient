@@ -11,8 +11,8 @@ namespace MediasiteUtil
 	{
 		public async Task<RecorderStatus> GetRecorderStatusAsync(string recorderId)
 		{
-			var request = new RestRequest(String.Format("Recorders('{0}')/ExtendedStatus", recorderId), Method.GET);
-			var results = await Client.GetAsyncResponse<RecorderStatus>(request);
+			var request = new RestRequest(String.Format("Recorders('{0}')/ExtendedStatus", recorderId), Method.Get);
+			var results = await Client.ExecuteAsync<RecorderStatus>(request);
 			ExpectResponse(HttpStatusCode.OK, request, results);
 
 			return results.Data;
@@ -24,8 +24,8 @@ namespace MediasiteUtil
 		/// <param name="recorderId">Recorder Id</param>
 		public async void RecorderStartAsync(string recorderId)
 		{
-			var request = new RestRequest(String.Format("Recorders('{0}')/Start", recorderId), Method.POST);
-			var results = await Client.GetAsyncResponse(request);
+			var request = new RestRequest(String.Format("Recorders('{0}')/Start", recorderId), Method.Post);
+			var results = await Client.ExecuteAsync(request);
 		}
 
 		/// <summary>
@@ -36,9 +36,9 @@ namespace MediasiteUtil
 		public async Task<Folder> FindFolderByIdAsync(string folderId)
 		{
 			// request the folder
-			var request = new RestRequest(String.Format("Folders('{0}')", folderId), Method.GET);
+			var request = new RestRequest(String.Format("Folders('{0}')", folderId), Method.Get);
 			request.RootElement = "value";
-			var folder = await Client.GetAsyncResponse<List<Folder>>(request);
+			var folder = await Client.ExecuteAsync<List<Folder>>(request);
 
 			// check for errors and expected number of results
 			ExpectResponse(HttpStatusCode.OK, request, folder);
@@ -63,7 +63,7 @@ namespace MediasiteUtil
 			while (returned == _batchSize)
 			{
 				var request = CreatePagedRestRequest("Folders", filter, "Name", _batchSize, current);
-				var results = await Client.GetAsyncResponse<List<Folder>>(request);
+				var results = await Client.ExecuteAsync<List<Folder>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
 				current += returned = results.Data.Count;
 				folders.AddRange(results.Data);
@@ -110,10 +110,10 @@ namespace MediasiteUtil
 		/// <param name="SelectedRecorder"></param>
 		public async Task<PresentationFullRepresentation> CreatePresentationAsync(Recorder recorder, Template template, Folder folder, String playerId, String participants)
 		{
-			var request = new RestRequest(String.Format("Templates('{0}')/CreatePresentationFromTemplate", template.Id), Method.POST);
+			var request = new RestRequest(String.Format("Templates('{0}')/CreatePresentationFromTemplate", template.Id), Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddBody(NewPresentationJson(folder.Id, playerId, participants));
-			var results = await Client.GetAsyncResponse<PresentationFullRepresentation>(request);
+			var results = await Client.ExecuteAsync<PresentationFullRepresentation>(request);
 			ExpectResponse(HttpStatusCode.OK, request, results);
 			return results.Data;
 		}

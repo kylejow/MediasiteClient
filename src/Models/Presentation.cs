@@ -1,5 +1,5 @@
 ﻿using System;
-using RestSharp.Deserializers;
+using System.Text.Json.Serialization;
 
 namespace MediasiteUtil.Models
 {
@@ -8,7 +8,7 @@ namespace MediasiteUtil.Models
 		public string Id { get; set; }
 		public string Title { get; set; }
 		public string Status { get; set; }
-		[DeserializeAs(Name = "#Play")]
+		[JsonPropertyName("#Play")]
 		public TargetClass PlayUrl { get; set; }
 
 		public PresentationDefaultRepresentation(PresentationDefaultRepresentation obj)
@@ -20,7 +20,6 @@ namespace MediasiteUtil.Models
 
 		public PresentationDefaultRepresentation() { }
 	}
-
 
 	public class PresentationCardRepresentation : PresentationDefaultRepresentation
 	{

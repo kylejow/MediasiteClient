@@ -1,26 +1,32 @@
 ﻿using System;
 using System.Text;
+using System.Threading.Tasks;
 using RestSharp;
 using RestSharp.Authenticators;
 
 namespace MediasiteUtil.Models
 {
-	public class Auth : IAuthenticator
+	public class Auth : AuthenticatorBase
 	{
 		private string userName, password, apiKey;
 
-		public Auth(string userName, string password, string apiKey)
+		public Auth(string userName, string password, string apiKey) : base("")
 		{
 			this.userName = userName;
 			this.password = password;
 			this.apiKey = apiKey;
 		}
 
-		public void Authenticate(IRestClient client, IRestRequest request)
+		protected override async ValueTask<Parameter> GetAuthenticationParameter(string accessToken)
 		{
-			var basicAuthHeaderValue = string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", this.userName, password))));
-			request.AddHeader("Authorization", basicAuthHeaderValue);
-			request.AddHeader("sfapikey", this.apiKey);
+            Token = string.IsNullOrEmpty(Token) ? string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", userName, password)))) : Token;
+			return new HeaderParameter(KnownHeaders.Authorization, Token);
+        }
+
+        public new async ValueTask Authenticate(RestClient client, RestRequest request)
+		{
+			request.AddOrUpdateParameter(await GetAuthenticationParameter(Token).ConfigureAwait(false))
+				.AddOrUpdateParameter("sfapikey", apiKey);
 		}
 	}
 }

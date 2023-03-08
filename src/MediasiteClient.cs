@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading;
 using MediasiteUtil.Models;
 using RestSharp;
 
@@ -89,7 +88,7 @@ namespace MediasiteUtil
 				if (_client == null)
 				{
 					_client = new RestClient(_config.Endpoint);
-					_client.Authenticator = new MediasiteUtil.Models.Auth(_config.Username, _config.Password, _config.ApiKey);
+					_client.Authenticator = new Auth(_config.Username, _config.Password, _config.ApiKey);
 				}
 				return _client;
 			}
@@ -161,7 +160,7 @@ namespace MediasiteUtil
 		public Folder FindFolderById(string folderId)
 		{
 			// request the folder
-			var request = new RestRequest(String.Format("Folders('{0}')", folderId), Method.GET);
+			var request = new RestRequest(String.Format("Folders('{0}')", folderId), Method.Get);
 			request.RootElement = "value";
 			var folder = Client.Execute<List<Folder>>(request);
 
@@ -264,7 +263,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		public Catalog FindCatalog(string catalogName)
 		{
-			var request = new RestRequest("Catalogs", Method.GET);
+			var request = new RestRequest("Catalogs", Method.Get);
 			request.AddParameter("$filter", String.Format("Name eq '{0}'", catalogName));
 			request.RootElement = "value";
 			var catalogs = Client.Execute<List<Catalog>>(request);
@@ -311,7 +310,7 @@ namespace MediasiteUtil
 		public PresentationFullRepresentation GetPresentationById(string presentationId)
 		{
 			// request the folder
-			var request = new RestRequest(String.Format("Presentations('{0}')", presentationId), Method.GET);
+			var request = new RestRequest(String.Format("Presentations('{0}')", presentationId), Method.Get);
 			request.AddParameter("$select", "full");
 			request.RootElement = "value";
 			var presentation = Client.Execute<List<PresentationFullRepresentation>>(request);
@@ -356,7 +355,7 @@ namespace MediasiteUtil
 		/// <param name="SelectedRecorder"></param>
 		public PresentationFullRepresentation CreatePresentation(Recorder recorder, Template template, String folderId, String playerId, String participants)
 		{
-			var request = new RestRequest(String.Format("Templates('{0}')/CreatePresentationFromTemplate", template.Id), Method.POST);
+			var request = new RestRequest(String.Format("Templates('{0}')/CreatePresentationFromTemplate", template.Id), Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddJsonBody(NewPresentationJson(folderId, playerId, participants));
 			var results = Client.Execute<PresentationFullRepresentation>(request);
@@ -371,7 +370,7 @@ namespace MediasiteUtil
 		/// <param name="SelectedRecorder"></param>
 		public PresentationFullRepresentation CreatePresentation(Template template, String folderId, String playerId, String title, DateTime recordTime)
 		{
-			var request = new RestRequest(String.Format("Templates('{0}')/CreatePresentationFromTemplate", template.Id), Method.POST);
+			var request = new RestRequest(String.Format("Templates('{0}')/CreatePresentationFromTemplate", template.Id), Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddJsonBody(NewPresentationWithTitle(folderId, playerId, title, recordTime));
 			var results = Client.Execute<PresentationFullRepresentation>(request);
@@ -431,7 +430,7 @@ namespace MediasiteUtil
 			var fileNameOnly = Path.GetFileName(filePath);
 			var uploadClient = new RestClient("https://mediasite.ucdavis.edu/mediasite/");
 			uploadClient.Authenticator = new MediasiteUtil.Models.Auth(_config.Username, _config.Password, _config.ApiKey);
-			var request = new RestRequest(String.Format("FileServer/Presentation/{0}/{1}", presentationId, Path.GetFileName(filePath)), Method.PUT);
+			var request = new RestRequest(String.Format("FileServer/Presentation/{0}/{1}", presentationId, Path.GetFileName(filePath)), Method.Put);
 			request.AddFile(fileNameOnly, filePath);
 			var results = uploadClient.Execute(request);
 			ExpectResponse(HttpStatusCode.Created, request, results);
@@ -449,17 +448,12 @@ namespace MediasiteUtil
 		{
 			var fileNameOnly = Path.GetFileName(filePath);
 			var uploadClient = new RestClient("https://mediasite.ucdavis.edu/mediasite/");
-			uploadClient.Timeout = 10 * 60 * 1000; // 10 minute timeout for upload
-			uploadClient.ReadWriteTimeout = 10 * 60 * 1000; // 10 minute timeout for upload to stream
-			uploadClient.Authenticator = new MediasiteUtil.Models.Auth(_config.Username, _config.Password, _config.ApiKey);
-			var request = new RestRequest(String.Format("FileServer/Presentation/{0}/{1}", presentationId, sendAsName), Method.PUT);
-			Response<string> responseObject;
-			using (var stream = File.Open(filePath, FileMode.Open))
-			{
-				request.AddFile("file", stream.CopyTo, sendAsName, fileLength);
-				var results = uploadClient.Execute(request);
-				responseObject = GetResponse(HttpStatusCode.Created, request, results);
-			}
+			uploadClient.Authenticator = new Auth(_config.Username, _config.Password, _config.ApiKey);
+			var request = new RestRequest(String.Format("FileServer/Presentation/{0}/{1}", presentationId, sendAsName), Method.Put);
+			request.Timeout = 10 * 60 * 1000; // 10 minute timeout for upload
+			request.AddFile("file", filePath);
+			var results = uploadClient.Execute(request);
+			var responseObject = GetResponse(HttpStatusCode.Created, request, results);
 
 			if (responseObject == null || !responseObject.success)
 			{
@@ -479,7 +473,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private String PostMediaUpload(String presentationId, String fileName)
 		{
-			var request = new RestRequest(String.Format("Presentations('{0}')/CreateMediaUpload", presentationId), Method.POST);
+			var request = new RestRequest(String.Format("Presentations('{0}')/CreateMediaUpload", presentationId), Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddJsonBody(new
 			{
@@ -498,7 +492,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private Response<string> PostMediaUploadWithResponse(String presentationId, String fileName)
 		{
-			var request = new RestRequest(String.Format("Presentations('{0}')/CreateMediaUpload", presentationId), Method.POST);
+			var request = new RestRequest(String.Format("Presentations('{0}')/CreateMediaUpload", presentationId), Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddJsonBody(new
 			{
@@ -516,7 +510,7 @@ namespace MediasiteUtil
 		/// <param name="SelectedRecorder"></param>
 		public Folder CreateFolder(String name, String parentFolderId)
 		{
-			var request = new RestRequest("Folders", Method.POST);
+			var request = new RestRequest("Folders", Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddJsonBody(new
 			{
@@ -531,7 +525,7 @@ namespace MediasiteUtil
 
 		public Job GetJob(String jobId)
 		{
-			var request = new RestRequest("Jobs('{id}')", Method.GET);
+			var request = new RestRequest("Jobs('{id}')", Method.Get);
 			request.AddParameter("id", jobId, ParameterType.UrlSegment);
 			var results = Client.Execute<Job>(request);
 			ExpectResponse(HttpStatusCode.OK, request, results);
@@ -549,7 +543,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private RestRequest CreatePagedRestRequest(string resource, string filter, string orderBy, int batchSize, int skip)
 		{
-			var request = new RestRequest(resource, Method.GET);
+			var request = new RestRequest(resource, Method.Get);
 
 			if (!String.IsNullOrEmpty(filter))
 			{
@@ -571,7 +565,7 @@ namespace MediasiteUtil
 
 		public AuthorizationTicket GetAuthTicket(string presentationId, int minutesToLive, string userName)
 		{
-			var request = new RestRequest("AuthorizationTickets", Method.POST);
+			var request = new RestRequest("AuthorizationTickets", Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddJsonBody(new
 			{
@@ -596,7 +590,7 @@ namespace MediasiteUtil
 		private Folder GetFolderWithFilter(string filter)
 		{
 			// request the folder
-			var request = new RestRequest("Folders", Method.GET);
+			var request = new RestRequest("Folders", Method.Get);
 			request.AddParameter("$filter", filter);
 			request.RootElement = "value";
 			var folders = Client.Execute<List<Folder>>(request);
@@ -656,7 +650,7 @@ namespace MediasiteUtil
 		/// <returns>Recorder Status</returns>
 		public RecorderStatus GetRecorderStatus(string recorderId)
 		{
-			var request = new RestRequest(String.Format("Recorders('{0}')/Status", recorderId), Method.GET);
+			var request = new RestRequest(String.Format("Recorders('{0}')/Status", recorderId), Method.Get);
 			var results = Client.Execute<RecorderStatus>(request);
 			ExpectResponse(HttpStatusCode.OK, request, results);
 
@@ -687,7 +681,7 @@ namespace MediasiteUtil
 		/// <param name="recorderId">Recorder Id</param>
 		public void RecorderStart(string recorderId)
 		{
-			var request = new RestRequest(String.Format("Recorders('{0}')/Start", recorderId), Method.POST);
+			var request = new RestRequest(String.Format("Recorders('{0}')/Start", recorderId), Method.Post);
 			var results = Client.Execute(request);
 			ExpectResponse(HttpStatusCode.NoContent, request, results);
 		}
@@ -698,7 +692,7 @@ namespace MediasiteUtil
 		/// <param name="recorderId"></param>
 		public void RecorderStop(string recorderId)
 		{
-			var request = new RestRequest(String.Format("Recorders('{0}')/Stop", recorderId), Method.POST);
+			var request = new RestRequest(String.Format("Recorders('{0}')/Stop", recorderId), Method.Post);
 			var results = Client.Execute(request);
 			ExpectResponse(HttpStatusCode.NoContent, request, results);
 		}
@@ -713,7 +707,7 @@ namespace MediasiteUtil
 		public string RecorderLogin(string recorderHostName, string username, string password)
 		{
 			var client = new RestClient(String.Format("http://{0}:8090/recorderwebapi/v1/", recorderHostName));
-			var request = new RestRequest("action/service/Login", Method.POST);
+			var request = new RestRequest("action/service/Login", Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddHeader("Content-Type", "application/json");
 			var json = new { Username = username, Password = password };
@@ -792,7 +786,7 @@ namespace MediasiteUtil
 		}
 		#endregion
 
-		private static void ExpectResponse(HttpStatusCode expectedStatusCode, IRestRequest request, IRestResponse response)
+		private static void ExpectResponse(HttpStatusCode expectedStatusCode, RestRequest request, RestResponse response)
 		{
 
 			if (response.StatusCode != expectedStatusCode || response.ErrorMessage != null)
@@ -817,7 +811,7 @@ namespace MediasiteUtil
 		/// <param name="request"></param>
 		/// <param name="response"></param>
 		/// <returns></returns>
-		private static Response<String> GetResponse(HttpStatusCode expectedStatusCode, IRestRequest request, IRestResponse response)
+		private static Response<String> GetResponse(HttpStatusCode expectedStatusCode, RestRequest request, RestResponse response)
 		{
 			return new Response<String>
 			{
@@ -837,7 +831,7 @@ namespace MediasiteUtil
 		/// <param name="request"></param>
 		/// <param name="response"></param>
 		/// <returns></returns>
-		private static Response<String> GetResponse(HttpStatusCode expectedStatusCode, IRestRequest request, IRestResponse<StringValue> response, Func<IRestResponse<StringValue>, String> contentSelector)
+		private static Response<String> GetResponse(HttpStatusCode expectedStatusCode, RestRequest request, RestResponse<StringValue> response, Func<RestResponse<StringValue>, String> contentSelector)
 		{
 			return new Response<String>
 			{
