@@ -22,11 +22,5 @@ namespace MediasiteUtil.Models
             Token = string.IsNullOrEmpty(Token) ? string.Format("Basic {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", userName, password)))) : Token;
 			return new HeaderParameter(KnownHeaders.Authorization, Token);
         }
-
-        public new async ValueTask Authenticate(RestClient client, RestRequest request)
-		{
-			request.AddOrUpdateParameter(await GetAuthenticationParameter(Token).ConfigureAwait(false))
-				.AddOrUpdateParameter("sfapikey", apiKey);
-		}
 	}
 }

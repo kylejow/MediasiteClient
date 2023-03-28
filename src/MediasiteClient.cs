@@ -89,6 +89,7 @@ namespace MediasiteUtil
 				{
 					_client = new RestClient(_config.Endpoint);
 					_client.Authenticator = new Auth(_config.Username, _config.Password, _config.ApiKey);
+					_client.AddDefaultHeader("sfapikey", _config.ApiKey);
 				}
 				return _client;
 			}
