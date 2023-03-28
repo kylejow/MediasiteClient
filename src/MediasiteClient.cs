@@ -188,10 +188,10 @@ namespace MediasiteUtil
 			while (returned == _batchSize)
 			{
 				var request = CreatePagedRestRequest("Folders", filter, "Name", _batchSize, current);
-				var results = Client.Execute<List<Folder>>(request);
+				var results = Client.Execute<OData<List<Folder>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Count;
-				folders.AddRange(results.Data);
+				current += returned = results.Data.Value.Count;
+				folders.AddRange(results.Data.Value);
 			}
 
 			return folders;
@@ -217,10 +217,10 @@ namespace MediasiteUtil
 			while (returned == _batchSize)
 			{
 				var request = CreatePagedRestRequest("Folders", filter, "Name", _batchSize, current);
-				var results = Client.Execute<List<Folder>>(request);
+				var results = Client.Execute<OData<List<Folder>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Count;
-				folders.AddRange(results.Data);
+				current += returned = results.Data.Value.Count;
+				folders.AddRange(results.Data.Value);
 			}
 
 			return folders;
@@ -294,10 +294,10 @@ namespace MediasiteUtil
 			while (returned == _batchSize)
 			{
 				var request = CreatePagedRestRequest("Players", "", "Name", _batchSize, current);
-				var results = Client.Execute<List<Player>>(request);
+				var results = Client.Execute<OData<List<Player>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Count;
-				players.AddRange(results.Data);
+				current += returned = results.Data.Value.Count;
+				players.AddRange(results.Data.Value);
 			}
 
 			return players;
@@ -340,10 +340,10 @@ namespace MediasiteUtil
 			{
 				var request = CreatePagedRestRequest("Presentations", filter, "Title", _batchSize, current);
 				request.AddParameter("$select", "full");		// "card" returns less than "full" but doesn't include Parent Folder ID
-				var results = Client.Execute<List<PresentationFullRepresentation>>(request);
+				var results = Client.Execute<OData<List<PresentationFullRepresentation>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Count;
-				presentations.AddRange(results.Data);
+				current += returned = results.Data.Value.Count;
+				presentations.AddRange(results.Data.Value);
 			}
 
 			return presentations;
@@ -559,7 +559,6 @@ namespace MediasiteUtil
 			{
 				request.AddParameter("$skip", skip);
 			}
-			request.RootElement = "value";
 
 			return request;
 		}
@@ -635,10 +634,10 @@ namespace MediasiteUtil
 			while (returned == _batchSize)
 			{
 				var request = CreatePagedRestRequest("Recorders", filter, "Name", _batchSize, current);
-				var results = Client.Execute<List<Recorder>>(request);
+				var results = Client.Execute<OData<List<Recorder>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Count;
-				recorders.AddRange(results.Data);
+				current += returned = results.Data.Value.Count;
+				recorders.AddRange(results.Data.Value);
 			}
 
 			return recorders;
@@ -753,10 +752,10 @@ namespace MediasiteUtil
 			if (returned == _batchSize)	// currently limited to 1 batch
 			{
 				var request = CreatePagedRestRequest("Schedules", filter, null, _batchSize, current);
-				var results = Client.Execute<List<Schedule>>(request);
+				var results = Client.Execute<OData<List<Schedule>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Count;
-				schedules.AddRange(results.Data);
+				current += returned = results.Data.Value.Count;
+				schedules.AddRange(results.Data.Value);
 			}
 
 			return schedules;
@@ -777,10 +776,10 @@ namespace MediasiteUtil
 			while (returned == _batchSize)
 			{
 				var request = CreatePagedRestRequest("Templates", null, null, _batchSize, current);
-				var results = Client.Execute<List<Template>>(request);
+				var results = Client.Execute<OData<List<Template>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Count;
-				templates.AddRange(results.Data);
+				current += returned = results.Data.Value.Count;
+				templates.AddRange(results.Data.Value);
 			}
 
 			return templates;
