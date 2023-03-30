@@ -410,7 +410,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private object NewPresentationWithTitle(string folderId, string playerId, string title, DateTime recordTime)
 		{
-			return new
+			return new NewPresentation
 			{
 				Title = title,
 				Duration = 60,
@@ -476,10 +476,7 @@ namespace MediasiteUtil
 		{
 			var request = new RestRequest(String.Format("Presentations('{0}')/CreateMediaUpload", presentationId), Method.Post);
 			request.RequestFormat = DataFormat.Json;
-			request.AddJsonBody(new
-			{
-				FileName = fileName
-			});
+			request.AddJsonBody(new NewMediaUpload { FileName = fileName });
 			var results = Client.Execute<StringValue>(request);
 			ExpectResponse(HttpStatusCode.OK, request, results);
 			return results.Data.value;
@@ -495,10 +492,7 @@ namespace MediasiteUtil
 		{
 			var request = new RestRequest(String.Format("Presentations('{0}')/CreateMediaUpload", presentationId), Method.Post);
 			request.RequestFormat = DataFormat.Json;
-			request.AddJsonBody(new
-			{
-				FileName = fileName
-			});
+			request.AddJsonBody(new NewMediaUpload { FileName = fileName });
 			var results = Client.Execute<StringValue>(request);
 
 			return GetResponse(HttpStatusCode.OK, request, results, r => r.Data.value);
@@ -513,7 +507,7 @@ namespace MediasiteUtil
 		{
 			var request = new RestRequest("Folders", Method.Post);
 			request.RequestFormat = DataFormat.Json;
-			request.AddJsonBody(new
+			request.AddJsonBody(new NewFolder
 			{
 				Name = name,
 				ParentFolderId = parentFolderId
@@ -567,7 +561,7 @@ namespace MediasiteUtil
 		{
 			var request = new RestRequest("AuthorizationTickets", Method.Post);
 			request.RequestFormat = DataFormat.Json;
-			request.AddJsonBody(new
+			request.AddJsonBody(new NewAuthorizationTicket
 			{
 				Username = userName,
 				//ClientIpAddress = Request.UserHostAddress,
@@ -710,7 +704,7 @@ namespace MediasiteUtil
 			var request = new RestRequest("action/service/Login", Method.Post);
 			request.RequestFormat = DataFormat.Json;
 			request.AddHeader("Content-Type", "application/json");
-			var json = new { Username = username, Password = password };
+			var json = new NewRecorderLogin { Username = username, Password = password };
 			request.AddBody(json);
 			var results = client.Execute(request);
 			ExpectResponse(HttpStatusCode.OK, request, results);
