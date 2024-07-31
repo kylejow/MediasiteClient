@@ -161,14 +161,13 @@ namespace MediasiteUtil
 		public Folder FindFolderById(string folderId)
 		{
 			// request the folder
-			var request = new RestRequest(String.Format("Folders('{0}')", folderId), Method.Get);
-			request.RootElement = "value";
-			var folder = Client.Execute<List<Folder>>(request);
+			var resource = String.Format("Folders('{0}')", folderId);
+			var request = new RestRequest(resource, Method.Get);
+			var folder = Client.Execute<Folder>(request);
 
 			// check for errors and expected number of results
 			ExpectResponse(HttpStatusCode.OK, request, folder);
-			ExpectSingleResult(request, folder.Data);
-			return folder.Data[0];
+			return folder.Data;
 		}
 
 		/// <summary>
@@ -310,16 +309,15 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		public PresentationFullRepresentation GetPresentationById(string presentationId)
 		{
-			// request the folder
-			var request = new RestRequest(String.Format("Presentations('{0}')", presentationId), Method.Get);
+			// request the presentation
+			var resource = String.Format("Presentations('{0}')", presentationId);
+			var request = new RestRequest(resource, Method.Get);
 			request.AddParameter("$select", "full");
-			request.RootElement = "value";
-			var presentation = Client.Execute<List<PresentationFullRepresentation>>(request);
-
+			var presentation = Client.Execute<PresentationFullRepresentation>(request);
+			
 			// check for errors and expected number of results
 			ExpectResponse(HttpStatusCode.OK, request, presentation);
-			ExpectSingleResult(request, presentation.Data);
-			return presentation.Data[0];
+			return presentation.Data;
 		}
 
 		/// <summary>
@@ -584,16 +582,16 @@ namespace MediasiteUtil
 		private Folder GetFolderWithFilter(string filter)
 		{
 			// request the folder
-			var request = new RestRequest("Folders", Method.Get);
-			request.AddParameter("$filter", filter);
-			request.RootElement = "value";
-			var folders = Client.Execute<List<Folder>>(request);
+			var folders = new List<Folder>();
+			var request = CreatePagedRestRequest("Folders", filter, "Name", _batchSize, 0);
+			var results = Client.Execute<OData<List<Folder>>>(request);
+			ExpectResponse(HttpStatusCode.OK, request, results);
+			folders.AddRange(results.Data.Value);
+			
+			// check for expected number of results
+			ExpectSingleResult(request, folders);
 
-			// check for errors and expected number of results
-			ExpectResponse(HttpStatusCode.OK, request, folders);
-			ExpectSingleResult(request, folders.Data);
-
-			return folders.Data[0];
+			return folders[0];
 		}
 
 		#region Recorders
