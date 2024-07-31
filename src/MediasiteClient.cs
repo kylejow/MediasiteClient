@@ -263,8 +263,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		public Catalog FindCatalog(string catalogName)
 		{
-			var resource = "Catalogs";
-			var request = new RestRequest(resource, Method.Get);
+			var request = new RestRequest("Catalogs", Method.Get);
 			request.AddParameter("$filter", String.Format("Name eq '{0}'", catalogName));
 			request.RootElement = "value";
 			var catalogs = Client.Execute<List<Catalog>>(request);
@@ -274,7 +273,7 @@ namespace MediasiteUtil
             // filter for exact match, since Mediasite Search service will return all results
             // where searchterm appears anywhere in the Title.
             catalogs.Data = catalogs.Data.Where(c => c.Name == catalogName).ToList();
-			ExpectSingleResult(resource, catalogs.Data);
+			ExpectSingleResult(request, catalogs.Data);
 
 			return catalogs.Data[0];
 		}
@@ -582,24 +581,15 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private Folder GetFolderWithFilter(string filter)
 		{
-			// pagination
-			var resource = "Folders";
-			var returned = _batchSize;
-			var current = 0;
-			
 			// request the folder
 			var folders = new List<Folder>();
-			while (returned == _batchSize)
-			{
-				var request = CreatePagedRestRequest(resource, filter, "Name", _batchSize, current);
-				var results = Client.Execute<OData<List<Folder>>>(request);
-				ExpectResponse(HttpStatusCode.OK, request, results);
-				current += returned = results.Data.Value.Count;
-				folders.AddRange(results.Data.Value);
-			}
+			var request = CreatePagedRestRequest("Folders", filter, "Name", _batchSize, 0);
+			var results = Client.Execute<OData<List<Folder>>>(request);
+			ExpectResponse(HttpStatusCode.OK, request, results);
+			folders.AddRange(results.Data.Value);
 			
 			// check for expected number of results
-			ExpectSingleResult(resource, folders);
+			ExpectSingleResult(request, folders);
 
 			return folders[0];
 		}
@@ -798,11 +788,11 @@ namespace MediasiteUtil
 			}
 		}
 
-		private static void ExpectSingleResult(String resource, IList list)
+		private static void ExpectSingleResult(RestRequest request, IList list)
 		{
 			if (list.Count != 1)
 			{
-				throw new Exception(String.Format("{0} found {1} items", resource, list.Count));
+				throw new Exception(String.Format("{0} found {1} items", request.Resource, list.Count));
 			}
 		}
 
