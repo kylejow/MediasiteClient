@@ -196,7 +196,6 @@ namespace MediasiteUtil
 			return folders;
 		}
 
-
 		/// <summary>
 		/// Finds all folders starting with a given string, in the specified parent folder.
 		/// </summary>
@@ -301,6 +300,7 @@ namespace MediasiteUtil
 
 			return players;
 		}
+
 		#region Presentations
 		/// <summary>
 		/// Gets Presentation by Id
