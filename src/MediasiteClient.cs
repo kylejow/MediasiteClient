@@ -499,8 +499,8 @@ namespace MediasiteUtil
 		/// <summary>
 		/// Creates a Presentation
 		/// </summary>
-		/// <param name="p"></param>
-		/// <param name="SelectedRecorder"></param>
+		/// <param name="name"></param>
+		/// <param name="parentFolderId"></param>
 		public Folder CreateFolder(String name, String parentFolderId)
 		{
 			var request = new RestRequest("Folders", Method.Post);
@@ -775,6 +775,70 @@ namespace MediasiteUtil
 			}
 
 			return templates;
+		}
+		
+		/// <summary>
+		/// Finds and returns a schedule by schedule name, exact match
+		/// </summary>
+		/// <param name="scheduleName"></param>
+		/// <returns></returns>
+		public Schedule FindSchedule(string scheduleName)
+		{
+			// build a filter to find the folder
+			var filter = String.Format("Name eq '{0}'", scheduleName);
+			return GetScheduleWithFilter(filter);
+		}
+		
+		/// <summary>
+		/// Return a single schedule matching a generic search filter
+		/// </summary>
+		/// <param name="filter"></param>
+		/// <returns></returns>
+		private Schedule GetScheduleWithFilter(string filter)
+		{
+			// request the folder
+			var schedules = new List<Schedule>();
+			var request = CreatePagedRestRequest("Schedules", filter, "Name", _batchSize, 0);
+			var results = Client.Execute<OData<List<Schedule>>>(request);
+			ExpectResponse(HttpStatusCode.OK, request, results);
+			schedules.AddRange(results.Data.Value);
+			
+			// check for expected number of results
+			ExpectSingleResult(request, schedules);
+
+			return schedules[0];
+		}
+		
+		/// <summary>
+		/// Creates a Schedule
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="folderId"></param>
+		/// <param name="templateId"></param>
+		/// <param name="recorderId"></param>
+		public Schedule CreateSchedule(String name, String folderId, String templateId, String recorderId)
+		{
+			var request = new RestRequest("Schedules", Method.Post);
+			request.RequestFormat = DataFormat.Json;
+			request.AddJsonBody(new NewSchedule()
+			{
+				Name = name,
+				TitleType = "ScheduleNameAndAirDateTime",
+				FolderId = folderId,
+				ScheduleTemplateId = templateId,
+				IsUploadAutomatic = true,
+				RecorderId = recorderId,
+				AdvanceCreationTime = 0,
+				AdvanceLoadTimeInSeconds = 0,
+				CreatePresentation = true,
+				LoadPresentation = true,
+				AutoStart = true,
+				AutoStop = true,
+				DeleteInactive = false
+			});
+			var results = Client.Execute<Schedule>(request);
+			ExpectResponse(HttpStatusCode.OK, request, results);
+			return results.Data;
 		}
 		#endregion
 
