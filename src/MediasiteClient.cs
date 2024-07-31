@@ -161,14 +161,13 @@ namespace MediasiteUtil
 		public Folder FindFolderById(string folderId)
 		{
 			// request the folder
-			var request = new RestRequest(String.Format("Folders('{0}')", folderId), Method.Get);
-			request.RootElement = "value";
-			var folder = Client.Execute<List<Folder>>(request);
+			var resource = String.Format("Folders('{0}')", folderId);
+			var request = new RestRequest(resource, Method.Get);
+			var folder = Client.Execute<Folder>(request);
 
 			// check for errors and expected number of results
 			ExpectResponse(HttpStatusCode.OK, request, folder);
-			ExpectSingleResult(request, folder.Data);
-			return folder.Data[0];
+			return folder.Data;
 		}
 
 		/// <summary>
@@ -264,7 +263,8 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		public Catalog FindCatalog(string catalogName)
 		{
-			var request = new RestRequest("Catalogs", Method.Get);
+			var resource = "Catalogs";
+			var request = new RestRequest(resource, Method.Get);
 			request.AddParameter("$filter", String.Format("Name eq '{0}'", catalogName));
 			request.RootElement = "value";
 			var catalogs = Client.Execute<List<Catalog>>(request);
@@ -274,7 +274,7 @@ namespace MediasiteUtil
             // filter for exact match, since Mediasite Search service will return all results
             // where searchterm appears anywhere in the Title.
             catalogs.Data = catalogs.Data.Where(c => c.Name == catalogName).ToList();
-			ExpectSingleResult(request, catalogs.Data);
+			ExpectSingleResult(resource, catalogs.Data);
 
 			return catalogs.Data[0];
 		}
@@ -310,16 +310,15 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		public PresentationFullRepresentation GetPresentationById(string presentationId)
 		{
-			// request the folder
-			var request = new RestRequest(String.Format("Presentations('{0}')", presentationId), Method.Get);
+			// request the presentation
+			var resource = String.Format("Presentations('{0}')", presentationId);
+			var request = new RestRequest(resource, Method.Get);
 			request.AddParameter("$select", "full");
-			request.RootElement = "value";
-			var presentation = Client.Execute<List<PresentationFullRepresentation>>(request);
-
+			var presentation = Client.Execute<PresentationFullRepresentation>(request);
+			
 			// check for errors and expected number of results
 			ExpectResponse(HttpStatusCode.OK, request, presentation);
-			ExpectSingleResult(request, presentation.Data);
-			return presentation.Data[0];
+			return presentation.Data;
 		}
 
 		/// <summary>
@@ -583,17 +582,26 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private Folder GetFolderWithFilter(string filter)
 		{
+			// pagination
+			var resource = "Folders";
+			var returned = _batchSize;
+			var current = 0;
+			
 			// request the folder
-			var request = new RestRequest("Folders", Method.Get);
-			request.AddParameter("$filter", filter);
-			request.RootElement = "value";
-			var folders = Client.Execute<List<Folder>>(request);
+			var folders = new List<Folder>();
+			while (returned == _batchSize)
+			{
+				var request = CreatePagedRestRequest(resource, filter, "Name", _batchSize, current);
+				var results = Client.Execute<OData<List<Folder>>>(request);
+				ExpectResponse(HttpStatusCode.OK, request, results);
+				current += returned = results.Data.Value.Count;
+				folders.AddRange(results.Data.Value);
+			}
+			
+			// check for expected number of results
+			ExpectSingleResult(resource, folders);
 
-			// check for errors and expected number of results
-			ExpectResponse(HttpStatusCode.OK, request, folders);
-			ExpectSingleResult(request, folders.Data);
-
-			return folders.Data[0];
+			return folders[0];
 		}
 
 		#region Recorders
@@ -790,11 +798,11 @@ namespace MediasiteUtil
 			}
 		}
 
-		private static void ExpectSingleResult(RestRequest request, IList list)
+		private static void ExpectSingleResult(String resource, IList list)
 		{
 			if (list.Count != 1)
 			{
-				throw new Exception(String.Format("{0} found {1} items", request.Resource, list.Count));
+				throw new Exception(String.Format("{0} found {1} items", resource, list.Count));
 			}
 		}
 

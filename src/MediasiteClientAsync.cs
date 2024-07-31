@@ -36,14 +36,13 @@ namespace MediasiteUtil
 		public async Task<Folder> FindFolderByIdAsync(string folderId)
 		{
 			// request the folder
-			var request = new RestRequest(String.Format("Folders('{0}')", folderId), Method.Get);
-			request.RootElement = "value";
-			var folder = await Client.ExecuteAsync<List<Folder>>(request);
+			var resource = String.Format("Folders('{0}')", folderId);
+			var request = new RestRequest(resource, Method.Get);
+			var folder = await Client.ExecuteAsync<Folder>(request);
 
 			// check for errors and expected number of results
 			ExpectResponse(HttpStatusCode.OK, request, folder);
-			ExpectSingleResult(request, folder.Data);
-			return folder.Data[0];
+			return folder.Data;
 		}
 
 		/// <summary>
