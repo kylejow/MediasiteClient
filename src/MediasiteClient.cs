@@ -810,17 +810,45 @@ namespace MediasiteUtil
 		}
 		
 		/// <summary>
+		/// Finds and returns a schedule's recurrences by schedule ID, exact match
+		/// </summary>
+		/// <param name="scheduleId"></param>
+		/// <returns></returns>
+		public Recurrences GetScheduleRecurrences(string scheduleId)
+		{
+			// Request the recurrences
+			var resource = String.Format("Schedules('{0}')/Recurrences", scheduleId);
+			var recurrences = new List<Recurrences>();
+			var request = CreatePagedRestRequest(resource, null, "Name", _batchSize, 0);
+			var results = Client.Execute<OData<List<Recurrences>>>(request);
+			ExpectResponse(HttpStatusCode.OK, request, results);
+			recurrences.AddRange(results.Data.Value);
+			
+			// check for expected number of results
+			ExpectSingleResult(request, recurrences);
+
+			return recurrences[0];
+		}
+		
+		/// <summary>
 		/// Creates a Schedule
 		/// </summary>
 		/// <param name="name"></param>
 		/// <param name="folderId"></param>
 		/// <param name="templateId"></param>
 		/// <param name="recorderId"></param>
-		public Schedule CreateSchedule(String name, String folderId, String templateId, String recorderId)
+		/// <param name="recordDuration"></param>
+		/// <param name="startRecordDateTime"></param>
+		/// <param name="endRecordDateTime"></param>
+		/// <param name="daysOfTheWeek"></param>
+		public Schedule CreateSchedule(String name, String folderId, String templateId,
+			String recorderId, Int32 recordDuration, DateTime startRecordDateTime,
+			DateTime endRecordDateTime, String daysOfTheWeek)
 		{
-			var request = new RestRequest("Schedules", Method.Post);
-			request.RequestFormat = DataFormat.Json;
-			request.AddJsonBody(new NewSchedule()
+			// Create schedule
+			var scheduleRequest = new RestRequest("Schedules", Method.Post);
+			scheduleRequest.RequestFormat = DataFormat.Json;
+			scheduleRequest.AddJsonBody(new NewSchedule()
 			{
 				Name = name,
 				TitleType = "ScheduleNameAndAirDateTime",
@@ -836,9 +864,27 @@ namespace MediasiteUtil
 				AutoStop = true,
 				DeleteInactive = false
 			});
-			var results = Client.Execute<Schedule>(request);
-			ExpectResponse(HttpStatusCode.OK, request, results);
-			return results.Data;
+			var scheduleResponse = Client.Execute<Schedule>(scheduleRequest);
+			ExpectResponse(HttpStatusCode.OK, scheduleRequest, scheduleResponse);
+			
+			// Add recurrences to schedule
+			var resource = String.Format("Schedules('{0}')/Recurrences", scheduleResponse.Data.Id);
+			var recurrencesRequest = new RestRequest(resource, Method.Post);
+			recurrencesRequest.RequestFormat = DataFormat.Json;
+			recurrencesRequest.AddJsonBody(new NewWeeklyRecurrences()
+			{
+				RecordDuration = recordDuration,
+				StartRecordDateTime = startRecordDateTime,
+				EndRecordDateTime = endRecordDateTime,
+				RecurrencePattern = "Weekly",
+				RecurrenceFrequency = 1,
+				WeekDayOnly = true,
+				DaysOfTheWeek = daysOfTheWeek
+			});
+			var recurrencesResponse = Client.Execute<Recurrences>(recurrencesRequest);
+			ExpectResponse(HttpStatusCode.OK, recurrencesRequest, recurrencesResponse);
+			
+			return scheduleResponse.Data;
 		}
 		#endregion
 
