@@ -642,7 +642,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		public Recorder FindRecorder(string recorderName)
 		{
-			// build a filter to find the folder
+			// build a filter to find the recorder
 			var filter = String.Format("Name eq '{0}'", recorderName);
 			return GetRecorderWithFilter(filter);
 		}
@@ -654,7 +654,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private Recorder GetRecorderWithFilter(string filter)
 		{
-			// request the folder
+			// request the recorder
 			var recorders = new List<Recorder>();
 			var request = CreatePagedRestRequest("Recorders", filter, "Name", _batchSize, 0);
 			var results = Client.Execute<OData<List<Recorder>>>(request);
@@ -816,7 +816,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		public Schedule FindSchedule(string scheduleName)
 		{
-			// build a filter to find the folder
+			// build a filter to find the schedule
 			var filter = String.Format("Name eq '{0}'", scheduleName);
 			return GetScheduleWithFilter(filter);
 		}
@@ -828,7 +828,7 @@ namespace MediasiteUtil
 		/// <returns></returns>
 		private Schedule GetScheduleWithFilter(string filter)
 		{
-			// request the folder
+			// request the schedule
 			var schedules = new List<Schedule>();
 			var request = CreatePagedRestRequest("Schedules", filter, "Name", _batchSize, 0);
 			var results = Client.Execute<OData<List<Schedule>>>(request);
@@ -846,20 +846,25 @@ namespace MediasiteUtil
 		/// </summary>
 		/// <param name="scheduleId"></param>
 		/// <returns></returns>
-		public Recurrences GetScheduleRecurrences(string scheduleId)
+		public List<Recurrences> GetScheduleRecurrences(string scheduleId)
 		{
-			// Request the recurrences
-			var resource = String.Format("Schedules('{0}')/Recurrences", scheduleId);
-			var recurrences = new List<Recurrences>();
-			var request = CreatePagedRestRequest(resource, null, "Name", _batchSize, 0);
-			var results = Client.Execute<OData<List<Recurrences>>>(request);
-			ExpectResponse(HttpStatusCode.OK, request, results);
-			recurrences.AddRange(results.Data.Value);
-			
-			// check for expected number of results
-			ExpectSingleResult(request, recurrences);
+			// pagination
+			var returned = _batchSize;
+			var current = 0;
 
-			return recurrences[0];
+			// get all recurrences - paged query
+			var recurrences = new List<Recurrences>();
+			var resource = String.Format("Schedules('{0}')/Recurrences", scheduleId);
+			while (returned == _batchSize)
+			{
+				var request = CreatePagedRestRequest(resource, null, "Name", _batchSize, 0);
+				var results = Client.Execute<OData<List<Recurrences>>>(request);
+				ExpectResponse(HttpStatusCode.OK, request, results);
+				current += returned = results.Data.Value.Count;
+				recurrences.AddRange(results.Data.Value);
+			}
+
+			return recurrences;
 		}
 		
 		/// <summary>
@@ -900,12 +905,12 @@ namespace MediasiteUtil
 		/// Adds a weekly recurrence to a schedule in UTC
 		/// </summary>
 		/// <param name="scheduleId"></param>
-		/// <param name="recordDuration"></param>
+		/// <param name="recordDurationMs"></param>
 		/// <param name="startRecurrenceDateTime"></param>
 		/// <param name="endRecurrenceDate"></param>
 		/// <param name="daysOfTheWeek"></param>
 		/// <returns></returns>
-		public Recurrences AddWeeklyRecurrence(string scheduleId, int recordDuration, DateTime startRecurrenceDateTime,
+		public Recurrences AddWeeklyRecurrence(string scheduleId, int recordDurationMs, DateTime startRecurrenceDateTime,
 			DateTime endRecurrenceDate, string daysOfTheWeek)
 		{
 			// Add recurrences to schedule
@@ -914,7 +919,7 @@ namespace MediasiteUtil
 			request.RequestFormat = DataFormat.Json;
 			request.AddJsonBody(new NewWeeklyRecurrences()
 			{
-				RecordDuration = recordDuration,
+				RecordDuration = recordDurationMs,
 				StartRecordDateTime = startRecurrenceDateTime,
 				EndRecordDateTime = endRecurrenceDate,
 				RecurrencePattern = "Weekly",
