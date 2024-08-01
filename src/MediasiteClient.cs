@@ -897,16 +897,16 @@ namespace MediasiteUtil
 		}
 
 		/// <summary>
-		/// Adds a weekly recurrence to a schedule
+		/// Adds a weekly recurrence to a schedule in UTC
 		/// </summary>
 		/// <param name="scheduleId"></param>
 		/// <param name="recordDuration"></param>
-		/// <param name="startRecordDateTime"></param>
-		/// <param name="endRecordDateTime"></param>
+		/// <param name="startRecurrenceDateTime"></param>
+		/// <param name="endRecurrenceDate"></param>
 		/// <param name="daysOfTheWeek"></param>
 		/// <returns></returns>
-		public Recurrences AddWeeklyRecurrence(string scheduleId, int recordDuration, DateTime startRecordDateTime,
-			DateTime endRecordDateTime, string daysOfTheWeek)
+		public Recurrences AddWeeklyRecurrence(string scheduleId, int recordDuration, DateTime startRecurrenceDateTime,
+			DateTime endRecurrenceDate, string daysOfTheWeek)
 		{
 			// Add recurrences to schedule
 			var resource = String.Format("Schedules('{0}')/Recurrences", scheduleId);
@@ -915,8 +915,8 @@ namespace MediasiteUtil
 			request.AddJsonBody(new NewWeeklyRecurrences()
 			{
 				RecordDuration = recordDuration,
-				StartRecordDateTime = startRecordDateTime,
-				EndRecordDateTime = endRecordDateTime,
+				StartRecordDateTime = startRecurrenceDateTime,
+				EndRecordDateTime = endRecurrenceDate,
 				RecurrencePattern = "Weekly",
 				RecurrenceFrequency = 1,
 				WeekDayOnly = true,
