@@ -499,8 +499,8 @@ namespace MediasiteUtil
 		/// <summary>
 		/// Creates a Presentation
 		/// </summary>
-		/// <param name="p"></param>
-		/// <param name="SelectedRecorder"></param>
+		/// <param name="name"></param>
+		/// <param name="parentFolderId"></param>
 		public Folder CreateFolder(String name, String parentFolderId)
 		{
 			var request = new RestRequest("Folders", Method.Post);
@@ -634,7 +634,39 @@ namespace MediasiteUtil
 
 			return recorders;
 		}
+		
+		/// <summary>
+		/// Finds and returns a recorder by recorder name, exact match
+		/// </summary>
+		/// <param name="recorderName"></param>
+		/// <returns></returns>
+		public Recorder FindRecorder(string recorderName)
+		{
+			// build a filter to find the recorder
+			var filter = String.Format("Name eq '{0}'", recorderName);
+			return GetRecorderWithFilter(filter);
+		}
+		
+		/// <summary>
+		/// Return a single recorder matching a generic search filter
+		/// </summary>
+		/// <param name="filter"></param>
+		/// <returns></returns>
+		private Recorder GetRecorderWithFilter(string filter)
+		{
+			// request the recorder
+			var recorders = new List<Recorder>();
+			var request = CreatePagedRestRequest("Recorders", filter, "Name", _batchSize, 0);
+			var results = Client.Execute<OData<List<Recorder>>>(request);
+			ExpectResponse(HttpStatusCode.OK, request, results);
+			recorders.AddRange(results.Data.Value);
+			
+			// check for expected number of results
+			ExpectSingleResult(request, recorders);
 
+			return recorders[0];
+		}
+		
 		/// <summary>
 		/// Get the status of an individual Recorder
 		/// </summary>
@@ -775,6 +807,130 @@ namespace MediasiteUtil
 			}
 
 			return templates;
+		}
+		
+		/// <summary>
+		/// Finds and returns a schedule by schedule name, exact match
+		/// </summary>
+		/// <param name="scheduleName"></param>
+		/// <returns></returns>
+		public Schedule FindSchedule(string scheduleName)
+		{
+			// build a filter to find the schedule
+			var filter = String.Format("Name eq '{0}'", scheduleName);
+			return GetScheduleWithFilter(filter);
+		}
+		
+		/// <summary>
+		/// Return a single schedule matching a generic search filter
+		/// </summary>
+		/// <param name="filter"></param>
+		/// <returns></returns>
+		private Schedule GetScheduleWithFilter(string filter)
+		{
+			// request the schedule
+			var schedules = new List<Schedule>();
+			var request = CreatePagedRestRequest("Schedules", filter, "Name", _batchSize, 0);
+			var results = Client.Execute<OData<List<Schedule>>>(request);
+			ExpectResponse(HttpStatusCode.OK, request, results);
+			schedules.AddRange(results.Data.Value);
+			
+			// check for expected number of results
+			ExpectSingleResult(request, schedules);
+
+			return schedules[0];
+		}
+		
+		/// <summary>
+		/// Finds and returns a schedule's recurrences by schedule ID, exact match
+		/// </summary>
+		/// <param name="scheduleId"></param>
+		/// <returns></returns>
+		public List<Recurrences> GetScheduleRecurrences(string scheduleId)
+		{
+			// pagination
+			var returned = _batchSize;
+			var current = 0;
+
+			// get all recurrences - paged query
+			var recurrences = new List<Recurrences>();
+			var resource = String.Format("Schedules('{0}')/Recurrences", scheduleId);
+			while (returned == _batchSize)
+			{
+				var request = CreatePagedRestRequest(resource, null, "Name", _batchSize, 0);
+				var results = Client.Execute<OData<List<Recurrences>>>(request);
+				ExpectResponse(HttpStatusCode.OK, request, results);
+				current += returned = results.Data.Value.Count;
+				recurrences.AddRange(results.Data.Value);
+			}
+
+			return recurrences;
+		}
+		
+		/// <summary>
+		/// Creates a Schedule
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="folderId"></param>
+		/// <param name="templateId"></param>
+		/// <param name="recorderId"></param>
+		public Schedule CreateSchedule(String name, String folderId, String templateId, String recorderId)
+		{
+			// Create schedule
+			var request = new RestRequest("Schedules", Method.Post);
+			request.RequestFormat = DataFormat.Json;
+			request.AddJsonBody(new NewSchedule()
+			{
+				Name = name,
+				TitleType = "ScheduleNameAndAirDateTime",
+				FolderId = folderId,
+				ScheduleTemplateId = templateId,
+				IsUploadAutomatic = true,
+				RecorderId = recorderId,
+				AdvanceCreationTime = 0,
+				AdvanceLoadTimeInSeconds = 0,
+				CreatePresentation = true,
+				LoadPresentation = true,
+				AutoStart = true,
+				AutoStop = true,
+				DeleteInactive = false
+			});
+			var response = Client.Execute<Schedule>(request);
+			ExpectResponse(HttpStatusCode.OK, request, response);
+			
+			return response.Data;
+		}
+
+		/// <summary>
+		/// Adds a weekly recurrence to a schedule in UTC
+		/// </summary>
+		/// <param name="scheduleId"></param>
+		/// <param name="recordDurationMs"></param>
+		/// <param name="startRecurrenceDateTime"></param>
+		/// <param name="endRecurrenceDate"></param>
+		/// <param name="daysOfTheWeek"></param>
+		/// <returns></returns>
+		public Recurrences AddWeeklyRecurrence(string scheduleId, int recordDurationMs, DateTime startRecurrenceDateTime,
+			DateTime endRecurrenceDate, string daysOfTheWeek)
+		{
+			// Add recurrences to schedule
+			var resource = String.Format("Schedules('{0}')/Recurrences", scheduleId);
+			var request = new RestRequest(resource, Method.Post);
+			request.RequestFormat = DataFormat.Json;
+			request.AddJsonBody(new NewWeeklyRecurrences()
+			{
+				RecordDuration = recordDurationMs,
+				StartRecordDateTime = startRecurrenceDateTime,
+				EndRecordDateTime = endRecurrenceDate,
+				RecurrencePattern = "Weekly",
+				RecurrenceFrequency = 1,
+				WeekDayOnly = true,
+				DaysOfTheWeek = daysOfTheWeek
+			});
+			var response = Client.Execute<Recurrences>(request);
+			ExpectResponse(HttpStatusCode.OK, request, response);
+
+			return response.Data;
 		}
 		#endregion
 
