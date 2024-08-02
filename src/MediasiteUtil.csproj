@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <PackageId>MediasiteUtil.Law.Ucdavis.Edu</PackageId>
     <Authors>UC Davis School of Law</Authors>
     <Description>Mediasite API Client for reading and writing to some of the available Mediasite API endpoints.</Description>
@@ -9,7 +9,7 @@
     <RepositoryUrl>gitproj/MediasiteUtil</RepositoryUrl>
     <PackageTags>Mediasite API REST Client</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
