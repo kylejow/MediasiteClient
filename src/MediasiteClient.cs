@@ -614,25 +614,18 @@ namespace MediasiteUtil
 			var returned = _batchSize;
 			var current = 0;
 
-			// filter
-			string filter = null;
-			if (!String.IsNullOrEmpty(startsWith))
-			{
-				filter = String.Format("startswith(Name, '{0}')", startsWith);
-			}
-
-			// get all recorders - paged query
+			// get all recorders - paged query.  filter afterwards because 'startsWith' function does not like dash characters.
 			var recorders = new List<Recorder>();
 			while (returned == _batchSize)
 			{
-				var request = CreatePagedRestRequest("Recorders", filter, "Name", _batchSize, current);
+				var request = CreatePagedRestRequest("Recorders", "", "Name", _batchSize, current);
 				var results = Client.Execute<OData<List<Recorder>>>(request);
 				ExpectResponse(HttpStatusCode.OK, request, results);
 				current += returned = results.Data.Value.Count;
 				recorders.AddRange(results.Data.Value);
 			}
 
-			return recorders;
+			return recorders.Where(r => r.Name.StartsWith(startsWith ?? "")).ToList();
 		}
 		
 		/// <summary>
